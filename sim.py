@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 ALPHA = 0.4
 BETA = 0.5
 
-MAX_STEPS = 1000000
+MAX_STEPS = 4
 NUM_NODES = 5
 
 # Budget probability function 
@@ -38,6 +38,7 @@ def gen_random_ls_matrix(N):
 			A[i][j] += A[i][j-1]
 
 	return A
+	
 
 # Get initial awareness levels
 def gen_initial_dist(N):
@@ -65,10 +66,11 @@ def get_budget_dist(N):
 
 
 # Samples index
-def sample(A, i):
-	r = np.random.uniform()
+def sample(A, i, N):
+	r = np.random.uniform(high=A[i][-1])
+	print r, A[i][-1]
 	for j in range(N):
-		if A[i][j] < r:
+		if r < A[i][j]:
 			return j
 
 # Sample message
@@ -87,44 +89,47 @@ def sample_message(a, b, sq):
 def simulate_step(N, E, A, B, SQ, BD, counts):
 	i = np.random.randint(N)
 	counts[i] += 1
-	j = sample(E, i)
+	j = sample(E, i, N)
+	print "i, j:", (i, j)
 
-	r = np.uniform.random()
+	r = np.random.uniform()
 	# Peer group
 	if r <= ALPHA:
 		message = sample_message(A[j], B[j], SQ[j])
 	else:
 		# Firms
-		message = sample_message(BD[i][0], BD[i][1], BD[1][2])
+		message = sample_message(BD[i][0], BD[i][1], BD[i][2])
 
 	if message == 'A':
-		a1 = (A[i] * float(counts[i]-1) + 1) / counts[i]
-		b1 = B[i] * float(counts[i]-1) / counts[i]
+		a1 = (A[i] * float(counts[i]) + 1) / (counts[i]+1)
+		b1 = B[i] * float(counts[i]) / (counts[i]+1)
 	elif message == 'B':
-		a1 = A[i] * float(counts[i]-1) / counts[i]
-		b1 = (B[i] * float(counts[i]-1) + 1) / counts[i]
+		a1 = A[i] * float(counts[i]) / (counts[i]+1)
+		b1 = (B[i] * float(counts[i]) + 1) / (counts[i]+1)
 	else:
-		a1 = A[i] * float(counts[i]-1) / counts[i]
-		b1 = B[i] * float(counts[i]-1) / counts[i]
+		a1 = A[i] * float(counts[i]) / (counts[i]+1)
+		b1 = B[i] * float(counts[i]) / (counts[i]+1)
 
 	sq1 = 1.0 - a1 - b1
 	A[i], B[i], SQ[i] = a1, b1, sq1
 	return N, E, A, B, SQ, BD, counts
 
 
-def simulate():
-	N, E = NUM_NODES, gen_random_ls_matrix(N)
+def simulate(verbose = True):
+	N = NUM_NODES
+	E = gen_random_ls_matrix(N)
 	A, B, SQ = gen_initial_dist(N)
 	BD = get_budget_dist(N)
 	counts = np.zeros(N)
 
 	for t in xrange(MAX_STEPS):
 		N, E, A, B, SQ, BD, counts = simulate_step(N, E, A, B, SQ, BD, counts)
+		if verbose:
+			print "A:", A
+			print "B:", B
+			print "SQ:", SQ
+			print ""
 
-	# TODO: Analyze distributions
-	return 0
 
-
-# TODO: Something 
 if __name__ == '__main__':
-	pass
+	simulate(verbose = True)
