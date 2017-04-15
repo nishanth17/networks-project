@@ -2,11 +2,13 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-ALPHA = 0.4
-BETA = 0.5
+ALPHA = 0.7
+BETA = 0.2
 
-MAX_STEPS = 4
-NUM_NODES = 5
+MAX_STEPS = 1000000
+NUM_NODES = 7
+
+RESOLUTION = MAX_STEPS / 10
 
 # Budget probability function 
 def h(x, y):
@@ -68,7 +70,6 @@ def get_budget_dist(N):
 # Samples index
 def sample(A, i, N):
 	r = np.random.uniform(high=A[i][-1])
-	print r, A[i][-1]
 	for j in range(N):
 		if r < A[i][j]:
 			return j
@@ -90,7 +91,6 @@ def simulate_step(N, E, A, B, SQ, BD, counts):
 	i = np.random.randint(N)
 	counts[i] += 1
 	j = sample(E, i, N)
-	print "i, j:", (i, j)
 
 	r = np.random.uniform()
 	# Peer group
@@ -123,13 +123,22 @@ def simulate(verbose = True):
 	counts = np.zeros(N)
 
 	for t in xrange(MAX_STEPS):
+		if t % RESOLUTION == 0:
+			print "t = " + str(t) + " ..."
+
 		N, E, A, B, SQ, BD, counts = simulate_step(N, E, A, B, SQ, BD, counts)
-		if verbose:
+		if verbose and t % RESOLUTION == 0:
 			print "A:", A
 			print "B:", B
 			print "SQ:", SQ
 			print ""
 
+	print "Final Distribution:"
+	print "A:", A
+	print "B:", B
+	print "SQ:", SQ
+	print ""
+
 
 if __name__ == '__main__':
-	simulate(verbose = True)
+	simulate(verbose = False)
