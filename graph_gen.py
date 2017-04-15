@@ -6,6 +6,14 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
+def compute_row_prefix_sums(A):
+    N = len(A)
+    for i in xrange(N):
+        for j in xrange(1, N):
+            A[i][j] += A[i][j-1]
+    return A
+
+
 # Generates random left stochastic matrix such that the 
 # principal diagonal entries are zero
 def gen_random_ls_matrix(N):
@@ -26,32 +34,40 @@ def gen_random_ls_matrix(N):
             A[1:i, i] = diffs[:i-1]
             A[i+1:N-1, i] = diffs[i-1:]
 
-    for i in xrange(N):
-        for j in xrange(1, N):
-            A[i][j] += A[i][j-1]
-
-    return A
+    return compute_row_prefix_sums(A)
 
 
 # Generates random graph with random weights
 def get_incidence_matrix(N, p = 0.5):
     G =  nx.gnp_random_graph(N, p, directed = True)
-    A = np.zeros((N,N))
+    A = np.zeros((N, N))
     for i in range(N):
         m = max(G.predecessors(i))
         for j in range(N):
-            if G.has_edge(j,i):
+            if G.has_edge(j, i):
                 if G.predecessors(i) == 1:
                     A[j,i] = 1
                 else:
                     if j == m:
                         A[j,i] = 1.0 - A[:,i].sum()    
                     else:
-                        A[j,i] =(1.0 - A[:,i].sum()) * np.random.random_sample()  
+                        A[j,i] = (1.0 - A[:,i].sum()) * np.random.random_sample()  
+
+    return compute_row_prefix_sums(A)
+
+
+# Generates weights based on betweenness - assume nodes are indexed by integers
+def get_centrality_incidence_matrix(G):
+    N = nx.number_of_nodes(G)
+    A = np.zeros((N, N))
+    centrality = nx.algorithms.centrality.betweenness_centrality(G, endpoints = True)
+        
+    for i in xrange(N):
+        for j in xrange(N):
+            if G.has_edge(j, i):
+                A[i][j] = centrality[j]
 
     for i in xrange(N):
-        for j in xrange(1, N):
-            A[i][j] += A[i][j-1]
+        A[:, i] /= sum(A[:, i])
 
-    return A
-
+    return compute_row_prefix_sums(A)
