@@ -2,6 +2,8 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+import graph_gen
+
 ALPHA = 0.7
 BETA = 0.2
 
@@ -13,7 +15,7 @@ RESOLUTION = MAX_STEPS / 10
 # Budget probability function 
 def h(x, y):
 	return (x+y)/(x+y+BETA) * (x*x)/(x*x + y*y)
-	
+
 
 # Get initial awareness levels
 def gen_initial_dist(N):
@@ -90,7 +92,7 @@ def simulate_step(N, E, A, B, SQ, BD, counts):
 
 def simulate(verbose = True):
 	N = NUM_NODES
-	E = gen_random_ls_matrix(N)
+	E = graph_gen.gen_random_ls_matrix(N)
 	A, B, SQ = gen_initial_dist(N)
 	BD = get_budget_dist(N)
 	counts = np.zeros(N)
