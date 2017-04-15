@@ -92,7 +92,7 @@ def simulate_step(N, E, A, B, SQ, BD, counts):
 
 def simulate(verbose = True):
 	N = NUM_NODES
-	E = graph_gen.gen_random_ls_matrix(N)
+	E = graph_gen.get_incidence_matrix(N)
 	A, B, SQ = gen_initial_dist(N)
 	BD = get_budget_dist(N)
 	counts = np.zeros(N)

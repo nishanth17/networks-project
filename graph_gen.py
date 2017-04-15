@@ -34,18 +34,24 @@ def gen_random_ls_matrix(N):
 
 
 # Generates random graph with random weights
-def get_incidence_matrix(n, p = 0.5):
-    G =  nx.gnp_random_graph(n, p, directed=True)
-    A = np.zeros(shape=(n,n))
-    for i in range(n):
-        for j in range(n):
+def get_incidence_matrix(N, p = 0.5):
+    G =  nx.gnp_random_graph(N, p, directed = True)
+    A = np.zeros((N,N))
+    for i in range(N):
+        m = max(G.predecessors(i))
+        for j in range(N):
             if G.has_edge(j,i):
                 if G.predecessors(i) == 1:
-                    A[j,i]=1
+                    A[j,i] = 1
                 else:
-                    if j ==  max(G.predecessors(i)):
-                        A[j,i]= 1.0 - A[:,i].sum()    
+                    if j == m:
+                        A[j,i] = 1.0 - A[:,i].sum()    
                     else:
-                        A[j,i]=(1.0 - A[:,i].sum()) * np.random.random_sample()            
+                        A[j,i] =(1.0 - A[:,i].sum()) * np.random.random_sample()  
+
+    for i in xrange(N):
+        for j in xrange(1, N):
+            A[i][j] += A[i][j-1]
+
     return A
 
