@@ -3,29 +3,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import warnings
-
 warnings.filterwarnings('ignore')
 
-n = 5
 
-G=nx.gnp_random_graph(n,0.5,directed=True)
-pos=nx.spring_layout(G)
-G_n = nx.DiGraph()
-Eps=np.zeros(shape=(n,n))
-for i in range(n):
-    for j in range(n):
-        if G.has_edge(j,i):
-            if G.predecessors(i)==1:
-                Eps[j,i]=1
-            else:
-                if  j==max(G.predecessors(i)):
-                    Eps[j,i]=1-Eps[:,i].sum()    
+# Generates random left stochastic matrix such that the 
+# principal diagonal entries are zero
+def gen_random_ls_matrix(N):
+    A = np.zeros((N, N))
+    for i in xrange(N):
+        r = np.random.uniform(size=N-2)
+        r = np.sort(r)
+        diffs = np.ediff1d(r)
+        d0, dn = r[0], 1.0 - r[-1]
+        if i == 0:
+            A[1][0], A[N-1][0] = d0, dn
+            A[2:-1, 0] = diffs
+        elif i == N-1:
+            A[0][N-1], A[N-2][N-1] = d0, dn
+            A[1:N-2, N-1] = diffs
+        else:
+            A[0][i], A[N-1][i] = d0, dn
+            A[1:i, i] = diffs[:i-1]
+            A[i+1:N-1, i] = diffs[i-1:]
+
+    for i in xrange(N):
+        for j in xrange(1, N):
+            A[i][j] += A[i][j-1]
+
+    return A
+
+
+# Generates random graph with random weights
+def get_incidence_matrix(n, p = 0.5):
+    G =  nx.gnp_random_graph(n, p, directed=True)
+    A = np.zeros(shape=(n,n))
+    for i in range(n):
+        for j in range(n):
+            if G.has_edge(j,i):
+                if G.predecessors(i) == 1:
+                    A[j,i]=1
                 else:
-                    Eps[j,i]=(1-Eps[:,i].sum())*np.random.random_sample()            
-print(Eps)
+                    if j ==  max(G.predecessors(i)):
+                        A[j,i]= 1.0 - A[:,i].sum()    
+                    else:
+                        A[j,i]=(1.0 - A[:,i].sum()) * np.random.random_sample()            
+    return A
 
-
-nx.draw(G_n,pos,node_size=100,label=range(n))
-nx.draw_networkx_nodes(G_n,pos,node_size=140)
-nx.draw_networkx_labels(G_n,pos,node_size=120)
-plt.show()

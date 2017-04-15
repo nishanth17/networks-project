@@ -1,5 +1,5 @@
-import networkx as nx 
 import numpy as np
+import networkx as nx
 import matplotlib.pyplot as plt
 
 ALPHA = 0.7
@@ -13,33 +13,6 @@ RESOLUTION = MAX_STEPS / 10
 # Budget probability function 
 def h(x, y):
 	return (x+y)/(x+y+BETA) * (x*x)/(x*x + y*y)
-
-
-# Generates random left stochastic matrix such that the 
-# principal diagonal entries are zero
-def gen_random_ls_matrix(N):
-	A = np.zeros((N, N))
-	for i in xrange(N):
-		r = np.random.uniform(size=N-2)
-		r = np.sort(r)
-		diffs = np.ediff1d(r)
-		d0, dn = r[0], 1.0 - r[-1]
-		if i == 0:
-			A[1][0], A[N-1][0] = d0, dn
-			A[2:-1, 0] = diffs
-		elif i == N-1:
-			A[0][N-1], A[N-2][N-1] = d0, dn
-			A[1:N-2, N-1] = diffs
-		else:
-			A[0][i], A[N-1][i] = d0, dn
-			A[1:i, i] = diffs[:i-1]
-			A[i+1:N-1, i] = diffs[i-1:]
-
-	for i in xrange(N):
-		for j in xrange(1, N):
-			A[i][j] += A[i][j-1]
-
-	return A
 	
 
 # Get initial awareness levels
