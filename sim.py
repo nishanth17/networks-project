@@ -1,16 +1,24 @@
 import numpy as np
+import scipy as sp
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import graph_gen
+import graph_gen, utils
 
 ALPHA = 0.7
 BETA = 0.2
 
-MAX_STEPS = 1000000
-NUM_NODES = 7
+MAX_STEPS = 50
+NUM_NODES = 6
 
 RESOLUTION = MAX_STEPS / 10
+
+BUDGET_A = 0.9
+BUDGET_B = 0.6
+
+TOL = 1e-5
+SMALL = 1e-7
+MAX_ITER = 100
 
 # Budget probability function 
 def h(x, y):
@@ -26,7 +34,7 @@ def gen_initial_dist(N):
 			a, b = b, a
 
 		A[i], B[i], SQ[i] = a, b-a, 1.0-b
-
+ 
 	return A, B, SQ
 
 
@@ -90,9 +98,83 @@ def simulate_step(N, E, A, B, SQ, BD, counts):
 	return N, E, A, B, SQ, BD, counts
 
 
+# Returns centralities
+def get_centralities(N, E):
+	F = np.zeros((N, N))
+	for i in xrange(N):
+		for j in xrange(N):
+			if i == j:
+				F[i][j] = 1.0
+			else:
+				F[i][j] = ALPHA * E[i][j]
+
+	try:
+		A = np.linalg.inv(F)
+	except:
+		A = np.linalg.pinv(F)
+
+	c = np.dot(np.ones(N).T, A)
+	return c
+
+
+# Returns optimal budget distribution
+def get_optimal_budget_dist(N, E):
+	c = get_centralities(N, E)
+	A = np.zeros(N)
+	B = np.zeros(N)
+
+	def fA(w):
+		s = 0
+		for i in xrange(len(w)):
+			s += c[i] * h(w[i], B[i])
+		return s * -1.0/N * (1 - ALPHA)
+
+	def fB(w):
+		s = 0
+		for i in xrange(len(w)):
+			s += c[i] * h(A[i], w[i])
+		return s * -1.0/N * (1 - ALPHA)
+
+	def cA(w):
+		return -np.sum(A) + BUDGET_A
+
+	def cB(w):
+		return -np.sum(B) + BUDGET_B
+
+
+	# Perform coordinate ascent 
+	for _ in xrange(MAX_ITER):
+		# Optimize A
+		B = utils.round(B)
+		bounds = [(0, BUDGET_A)] * N
+		cons = ({'type': 'eq', 'fun': cA})
+		w = np.zeros(N)
+		res = sc.minimize(fA, w, bounds = bounds, constraints = cons)
+		A = utils.round(res.x, SMALL)
+
+		# Optimize B
+		bounds = [(0, BUDGET_B)] * N
+		cons = ({'type': 'eq', 'fun': cB})
+		w = np.zeros(N)
+		res = sc.minimize(fB, w, bounds = bounds, constraints = cons)
+		B = utils.round(res.x, SMALL)
+
+	BD = np.zeros((N, 3))
+	for i in xrange(N):
+		BD[i][0] = h(A[i], B[i])
+		BD[i][1] = h(B[i], A[i])
+		BD[i][2] = 1.0 - BD[i][0] - BD[i][1]
+
+	return BD
+
+
+# Perform simulation
 def simulate(verbose = True):
 	N = NUM_NODES
-	E = graph_gen.get_incidence_matrix(N)
+	G = nx.gnp_random_graph(N, 0.5, directed = True)
+	E = graph_gen.get_centrality_incidence_matrix(G)
+	Es = utils.compute_row_prefix_sums(E)
+
 	A, B, SQ = gen_initial_dist(N)
 	BD = get_budget_dist(N)
 	counts = np.zeros(N)
@@ -101,7 +183,7 @@ def simulate(verbose = True):
 		if t % RESOLUTION == 0:
 			print "t = " + str(t) + " ..."
 
-		N, E, A, B, SQ, BD, counts = simulate_step(N, E, A, B, SQ, BD, counts)
+		N, Es, A, B, SQ, BD, counts = simulate_step(N, Es, A, B, SQ, BD, counts)
 		if verbose and t % RESOLUTION == 0:
 			print "A:", A
 			print "B:", B

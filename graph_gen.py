@@ -6,14 +6,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def compute_row_prefix_sums(A):
-    N = len(A)
-    for i in xrange(N):
-        for j in xrange(1, N):
-            A[i][j] += A[i][j-1]
-    return A
-
-
 # Generates random left stochastic matrix such that the 
 # principal diagonal entries are zero
 def gen_random_ls_matrix(N):
@@ -34,7 +26,7 @@ def gen_random_ls_matrix(N):
             A[1:i, i] = diffs[:i-1]
             A[i+1:N-1, i] = diffs[i-1:]
 
-    return compute_row_prefix_sums(A)
+    return A
 
 
 # Generates random graph with random weights
@@ -53,7 +45,7 @@ def get_incidence_matrix(N, p = 0.5):
                     else:
                         A[j,i] = (1.0 - A[:,i].sum()) * np.random.random_sample()  
 
-    return compute_row_prefix_sums(A)
+    return A
 
 
 # Generates weights based on betweenness - assume nodes are indexed by integers
@@ -70,4 +62,4 @@ def get_centrality_incidence_matrix(G):
     for i in xrange(N):
         A[:, i] /= sum(A[:, i])
 
-    return compute_row_prefix_sums(A)
+    return A
