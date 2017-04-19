@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 
 # Generates random left stochastic matrix such that the 
 # principal diagonal entries are zero
-def gen_random_ls_matrix(N):
+def get_random_ls_matrix(N):
     A = np.zeros((N, N))
     for i in xrange(N):
         r = np.random.uniform(size=N-2)

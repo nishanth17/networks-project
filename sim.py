@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 import graph_gen, utils
 
-ALPHA = 0.7
+ALPHA = 0.5
 BETA = 0.2
 
-MAX_STEPS = 50
-NUM_NODES = 6
+MAX_STEPS = 10000
+NUM_NODES = 30
 
 RESOLUTION = MAX_STEPS / 10
 
@@ -32,7 +32,6 @@ def gen_initial_dist(N):
 		a, b = np.random.uniform(), np.random.uniform()
 		if a > b:
 			a, b = b, a
-
 		A[i], B[i], SQ[i] = a, b-a, 1.0-b
  
 	return A, B, SQ
@@ -100,20 +99,7 @@ def simulate_step(N, E, A, B, SQ, BD, counts):
 
 # Returns centralities
 def get_centralities(N, E):
-	F = np.zeros((N, N))
-	for i in xrange(N):
-		for j in xrange(N):
-			if i == j:
-				F[i][j] = 1.0
-			else:
-				F[i][j] = ALPHA * E[i][j]
-
-	try:
-		A = np.linalg.inv(F)
-	except:
-		A = np.linalg.pinv(F)
-
-	c = np.dot(np.ones(N).T, A)
+	c = np.dot(np.ones(N).T,  np.linalg.inv(np.identity(N) - ALPHA*E))
 	return c
 
 
@@ -171,9 +157,12 @@ def get_optimal_budget_dist(N, E):
 # Perform simulation
 def simulate(verbose = True):
 	N = NUM_NODES
-	G = nx.gnp_random_graph(N, 0.5, directed = True)
-	E = graph_gen.get_centrality_incidence_matrix(G)
+	#G = nx.gnp_random_graph(N, 0.5, directed = True)
+	#E = graph_gen.get_centrality_incidence_matrix(G)
+	E = graph_gen.get_incidence_matrix(N)
+	print get_centralities(N, E)
 	Es = utils.compute_row_prefix_sums(E)
+	
 
 	A, B, SQ = gen_initial_dist(N)
 	BD = get_budget_dist(N)
